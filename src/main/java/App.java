@@ -6,11 +6,8 @@ import java.nio.charset.Charset;
 import org.apache.commons.io.filefilter.*;
 
 public class App {
-  public String getGreeting() {
-    return "Hello world.";
-  }
-
-  public static void main(String[] args) throws java.io.IOException {
+  public static void main(String[] args) throws Exception {
+    var gm = GmailClient.getGmail();
     var dir = new File("/Users/mattb/Setup/sieve");
     FilenameFilter fileFilter = new WildcardFileFilter("*.txt");
     var addresses = new Addresses();
