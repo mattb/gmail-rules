@@ -7,19 +7,26 @@
  */
 
 plugins {
-    // Apply the java plugin to add support for Java
-    id 'java'
+  // Apply the java plugin to add support for Java
+  id 'java'
 
-    // Apply the application plugin to add support for building an application
-    id 'application'
+  // Apply the application plugin to add support for building an application
+  id 'application'
+
+  id 'com.google.cloud.tools.jib' version '0.9.11'
+
+  id "net.java.openjdk.shinyafox.jshell.gradle.plugin" version "1.0.4"
 }
 
 // Define the main class for the application
 mainClassName = 'App'
 
 dependencies {
-    // This dependency is found on compile classpath of this component and consumers.
-    compile 'com.google.guava:guava:23.0'
+    compile 'io.lettuce:lettuce-core:5.1.1.RELEASE'
+    compile 'com.google.guava:guava:27.0-jre'
+    compile group: 'commons-io', name: 'commons-io', version: '2.6'
+    compile group: 'com.google.api-client', name: 'google-api-client', version: '1.26.0'
+    compile group: 'com.google.apis', name: 'google-api-services-gmail', version: 'v1-rev96-1.25.0'
 
     // Use JUnit test framework
     testCompile 'junit:junit:4.12'
@@ -30,4 +37,10 @@ repositories {
     // Use jcenter for resolving your dependencies.
     // You can declare any Maven/Ivy/file repository here.
     jcenter()
+}
+
+jib {
+	from {
+        image = 'openjdk:11-jdk-slim'
+	}
 }
