@@ -18,7 +18,6 @@ public class App {
       labelNames.add(FilenameUtils.getBaseName(f.getName()));
     }
     var labels = sync.ensureLabels(labelNames);
-    System.out.println(labels);
     var addresses = new Addresses();
     for (var f : dir.listFiles(fileFilter)) {
       for (var l : Files.readLines(f, Charset.forName("UTF-8"))) {

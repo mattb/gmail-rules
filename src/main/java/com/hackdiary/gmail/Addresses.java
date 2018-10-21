@@ -70,7 +70,6 @@ public class Addresses {
     boolean done = false;
     while (!done) {
       partitionCount++;
-      System.out.format("Label %s Partitions %d\n", labelId, partitionCount);
       partitions = TreeMultimap.create(Multimaps.index(emails, this.partioner(partitionCount)));
       done = true;
       for (var k : partitions.keySet()) {

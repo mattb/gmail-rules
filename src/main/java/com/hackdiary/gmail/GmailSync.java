@@ -7,8 +7,11 @@ import com.google.api.services.gmail.model.LabelColor;
 import com.google.api.services.gmail.model.ListLabelsResponse;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class GmailSync {
   String[] colors =
@@ -71,11 +74,30 @@ public class GmailSync {
   }
 
   public void ensureFilters(List<Filter> filters) throws IOException {
-    for (var f : this.service.users().settings().filters().list("me").execute().getFilter()) {
+    List<Filter> toDelete = new LinkedList<Filter>();
+    Set<Filter> toAdd = new HashSet<Filter>(filters);
+    for (var existingFilter :
+        this.service.users().settings().filters().list("me").execute().getFilter()) {
+      var found = false;
+      for (var filter : filters) {
+        if (filter.getCriteria().getQuery().equals(existingFilter.getCriteria().getQuery())
+            && filter
+                .getAction()
+                .getAddLabelIds()
+                .equals(existingFilter.getAction().getAddLabelIds())) {
+          found = true;
+          toAdd.remove(filter);
+        }
+      }
+      if (!found) {
+        toDelete.add(existingFilter);
+      }
+    }
+    for (var f : toDelete) {
       this.service.users().settings().filters().delete("me", f.getId()).execute();
       System.out.println("Deleted " + f.getId());
     }
-    for (var f : filters) {
+    for (var f : toAdd) {
       var result = this.service.users().settings().filters().create("me", f).execute();
       System.out.println("Created " + result.getId());
     }
