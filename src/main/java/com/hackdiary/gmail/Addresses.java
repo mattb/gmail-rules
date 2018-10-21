@@ -40,7 +40,7 @@ public class Addresses {
     return "from:{" + String.join(" ", emails) + "}";
   }
 
-  Filter makeFilter(String labelId, Iterable<String> emails) {
+  Filter makeFilter(String labelId, boolean skipInbox, Iterable<String> emails) {
     var f = new Filter();
 
     var c = new FilterCriteria();
@@ -49,12 +49,19 @@ public class Addresses {
 
     var a = new FilterAction();
     a.setAddLabelIds(List.of(labelId));
+    if (skipInbox) {
+      a.setRemoveLabelIds(List.of("INBOX"));
+    }
     f.setAction(a);
 
     return f;
   }
 
   List<Filter> buildFilter(String labelId, List<Address> addresses) {
+    boolean skipInbox = false;
+    if (addresses.get(0).skipInbox) {
+      skipInbox = true;
+    }
     List<Filter> filters = new LinkedList<Filter>();
     List<String> emails = addresses.stream().map(a -> a.email).collect(Collectors.toList());
     TreeMultimap<Integer, String> partitions = TreeMultimap.create();
@@ -73,7 +80,7 @@ public class Addresses {
       }
     }
     for (var k : partitions.keySet()) {
-      filters.add(this.makeFilter(labelId, partitions.get(k)));
+      filters.add(this.makeFilter(labelId, skipInbox, partitions.get(k)));
     }
     return filters;
   }
