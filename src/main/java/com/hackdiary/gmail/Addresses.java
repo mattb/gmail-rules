@@ -37,7 +37,8 @@ public class Addresses {
   }
 
   String addressesToQuery(Iterable<String> emails) {
-    return "from:{" + String.join(" ", emails) + "}";
+    var joinedEmails = String.join(" ", emails);
+    return "from:{" + joinedEmails + "} OR to:{" + joinedEmails + "}";
   }
 
   Filter makeFilter(String labelId, boolean skipInbox, Iterable<String> emails) {

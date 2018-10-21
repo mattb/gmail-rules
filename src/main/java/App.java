@@ -11,12 +11,14 @@ public class App {
   public static void main(String[] args) throws Exception {
     var gm = GmailClient.getGmail();
     var sync = new GmailSync(gm);
+
     var dir = new File("/Users/mattb/Setup/sieve");
     FilenameFilter fileFilter = new WildcardFileFilter("*.txt");
     var labelNames = new LinkedList<String>();
     for (var f : dir.listFiles(fileFilter)) {
       labelNames.add(FilenameUtils.getBaseName(f.getName()));
     }
+
     var labels = sync.ensureLabels(labelNames);
     var addresses = new Addresses();
     for (var f : dir.listFiles(fileFilter)) {
