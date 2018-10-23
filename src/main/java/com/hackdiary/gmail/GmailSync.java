@@ -76,8 +76,11 @@ public class GmailSync {
   public void ensureFilters(List<Filter> filters) throws IOException {
     List<Filter> toDelete = new LinkedList<Filter>();
     Set<Filter> toAdd = new HashSet<Filter>(filters);
-    for (var existingFilter :
-        this.service.users().settings().filters().list("me").execute().getFilter()) {
+    var filterResult = this.service.users().settings().filters().list("me").execute().getFilter();
+    if (filterResult == null) {
+      filterResult = List.of();
+    }
+    for (var existingFilter : filterResult) {
       var found = false;
       for (var filter : filters) {
         if (filter.getCriteria().getQuery().equals(existingFilter.getCriteria().getQuery())
