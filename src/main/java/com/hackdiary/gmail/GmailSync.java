@@ -1,6 +1,7 @@
 package com.hackdiary.gmail;
 
 import com.google.api.services.gmail.Gmail;
+import com.google.api.services.gmail.GmailRequest;
 import com.google.api.services.gmail.model.Filter;
 import com.google.api.services.gmail.model.Label;
 import com.google.api.services.gmail.model.LabelColor;
@@ -11,7 +12,9 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class GmailSync {
   String[] colors =
@@ -39,24 +42,38 @@ public class GmailSync {
     return "#ffffff";
   }
 
+  public Optional<GmailRequest<Label>> createLabel(String name) {
+    var color = new LabelColor();
+    color.setBackgroundColor(colors[Math.abs(name.hashCode()) % colors.length]);
+    color.setTextColor(contrastFor(colors[Math.abs(name.hashCode()) % colors.length]));
+
+    var l = new Label();
+    l.setName(name);
+    l.setType("user");
+    l.setColor(color);
+    l.setLabelListVisibility("labelShow");
+    l.setMessageListVisibility("show");
+
+    try {
+      System.out.println("Creating label " + name);
+      return Optional.of(this.service.users().labels().create("me", l));
+    } catch (IOException e) {
+      System.out.println("Error creating label " + name);
+      return Optional.empty();
+    }
+  }
+
   public Map<String, String> ensureLabels(List<String> labelNames) throws IOException {
     var labels = getLabels().keySet();
-    for (var name : labelNames) {
-      if (!labels.contains(name)) {
-        var color = new LabelColor();
-        color.setBackgroundColor(colors[Math.abs(name.hashCode()) % colors.length]);
-        color.setTextColor(contrastFor(colors[Math.abs(name.hashCode()) % colors.length]));
-
-        var l = new Label();
-        l.setName(name);
-        l.setType("user");
-        l.setColor(color);
-        l.setLabelListVisibility("labelShow");
-        l.setMessageListVisibility("show");
-
-        this.service.users().labels().create("me", l).execute();
-        System.out.println("Creating label " + name);
-      }
+    var requests =
+        labelNames
+            .stream()
+            .filter(name -> !labels.contains(name))
+            .map(this::createLabel)
+            .flatMap(Optional::stream)
+            .collect(Collectors.toList());
+    for (var request : requests) {
+      request.execute();
     }
     return this.getLabels();
   }

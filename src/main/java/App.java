@@ -3,7 +3,7 @@ import com.hackdiary.gmail.*;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.nio.charset.Charset;
-import java.util.LinkedList;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.*;
@@ -17,11 +17,11 @@ public class App {
     FilenameFilter fileFilter = new WildcardFileFilter("*.txt");
     var filenames = dir.listFiles(fileFilter);
 
-    var labelNames = new LinkedList<String>();
-    Stream.of(filenames)
-        .map(f -> f.getName())
-        .map(FilenameUtils::getBaseName)
-        .forEach(labelNames::add);
+    var labelNames =
+        Stream.of(filenames)
+            .map(File::getName)
+            .map(FilenameUtils::getBaseName)
+            .collect(Collectors.toList());
 
     var labels = sync.ensureLabels(labelNames);
 
