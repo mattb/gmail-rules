@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.nio.charset.Charset;
 import java.util.LinkedList;
+import java.util.stream.Stream;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.*;
 
@@ -14,24 +15,32 @@ public class App {
 
     var dir = new File("/Users/mattb/Setup/sieve");
     FilenameFilter fileFilter = new WildcardFileFilter("*.txt");
+    var filenames = dir.listFiles(fileFilter);
+
     var labelNames = new LinkedList<String>();
-    for (var f : dir.listFiles(fileFilter)) {
-      labelNames.add(FilenameUtils.getBaseName(f.getName()));
-    }
+    Stream.of(filenames)
+        .map(f -> f.getName())
+        .map(FilenameUtils::getBaseName)
+        .forEach(labelNames::add);
 
     var labels = sync.ensureLabels(labelNames);
+
     var addresses = new Addresses();
-    for (var f : dir.listFiles(fileFilter)) {
-      for (var l : Files.readLines(f, Charset.forName("UTF-8"))) {
-        var labelName = FilenameUtils.getBaseName(f.getName());
-        var a = new Address();
-        a.labelId = labels.get(labelName);
-        a.email = l;
-        if (labelName.startsWith("Lists")) {
-          a.skipInbox = true;
-        }
-        addresses.add(a);
-      }
+    for (var f : filenames) {
+      var labelName = FilenameUtils.getBaseName(f.getName());
+      Files.readLines(f, Charset.forName("UTF-8"))
+          .stream()
+          .map(
+              line -> {
+                var a = new Address();
+                a.labelId = labels.get(labelName);
+                a.email = line;
+                if (labelName.startsWith("Lists")) {
+                  a.skipInbox = true;
+                }
+                return a;
+              })
+          .forEach(addresses::add);
     }
 
     sync.ensureFilters(addresses.buildFilters());
