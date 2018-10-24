@@ -25,7 +25,7 @@ public class App {
 
     var labels = sync.ensureLabels(labelNames);
 
-    var addresses = new Addresses();
+    var addresses = new Addresses("x@y.z");
     for (var f : filenames) {
       var labelName = FilenameUtils.getBaseName(f.getName());
       Files.readLines(f, Charset.forName("UTF-8"))
@@ -43,6 +43,6 @@ public class App {
           .forEach(addresses::add);
     }
 
-    sync.ensureFilters(addresses.buildFilters());
+    sync.ensureFilters(addresses.buildFilters(), addresses::isRuleQuery);
   }
 }

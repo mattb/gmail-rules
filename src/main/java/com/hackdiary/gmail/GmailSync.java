@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class GmailSync {
@@ -90,7 +91,8 @@ public class GmailSync {
     return labelToId;
   }
 
-  public void ensureFilters(List<Filter> filters) throws IOException {
+  public void ensureFilters(List<Filter> filters, Predicate<String> shouldProcessQuery)
+      throws IOException {
     List<Filter> toDelete = new LinkedList<Filter>();
     Set<Filter> toAdd = new HashSet<Filter>(filters);
     var filterResult = this.service.users().settings().filters().list("me").execute().getFilter();
@@ -98,19 +100,22 @@ public class GmailSync {
       filterResult = List.of();
     }
     for (var existingFilter : filterResult) {
-      var found = false;
-      for (var filter : filters) {
-        if (filter.getCriteria().getQuery().equals(existingFilter.getCriteria().getQuery())
-            && filter
-                .getAction()
-                .getAddLabelIds()
-                .equals(existingFilter.getAction().getAddLabelIds())) {
-          found = true;
-          toAdd.remove(filter);
+      if (shouldProcessQuery.test(existingFilter.getCriteria().getQuery())) {
+        var found = false;
+        for (var filter : filters) {
+          if (filter.getCriteria().getQuery().equals(existingFilter.getCriteria().getQuery())
+              && existingFilter.getAction() != null
+              && filter
+                  .getAction()
+                  .getAddLabelIds()
+                  .equals(existingFilter.getAction().getAddLabelIds())) {
+            found = true;
+            toAdd.remove(filter);
+          }
         }
-      }
-      if (!found) {
-        toDelete.add(existingFilter);
+        if (!found) {
+          toDelete.add(existingFilter);
+        }
       }
     }
     for (var f : toDelete) {
@@ -118,8 +123,13 @@ public class GmailSync {
       System.out.println("Deleted " + f.getId());
     }
     for (var f : toAdd) {
-      var result = this.service.users().settings().filters().create("me", f).execute();
-      System.out.println("Created " + result.getId());
+      try {
+        var result = this.service.users().settings().filters().create("me", f).execute();
+        System.out.println("Created " + result.getId());
+      } catch (IOException e) {
+        System.out.println("Error creating " + f.toPrettyString());
+        e.printStackTrace();
+      }
     }
   }
 }

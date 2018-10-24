@@ -13,6 +13,12 @@ import java.util.stream.Collectors;
 public class Addresses {
   List<Address> addresses = new LinkedList<Address>();
 
+  String shibboleth;
+
+  public Addresses(String shibboleth) {
+    this.shibboleth = shibboleth;
+  }
+
   public void add(Address a) {
     addresses.add(a);
   }
@@ -36,9 +42,13 @@ public class Addresses {
         (Math.abs(hasher.hashString(s, utf).asInt()) / (Integer.MAX_VALUE / partitionCount));
   }
 
+  public boolean isRuleQuery(String query) {
+    return query.contains(this.shibboleth);
+  }
+
   String addressesToQuery(Iterable<String> emails) {
     var joinedEmails = String.join(" ", emails);
-    return "from:{" + joinedEmails + "} OR to:{" + joinedEmails + "}";
+    return "from:{" + joinedEmails + " " + this.shibboleth + "} OR to:{" + joinedEmails + "}";
   }
 
   Filter makeFilter(String labelId, boolean skipInbox, Iterable<String> emails) {
