@@ -43,7 +43,7 @@ public class Addresses {
   }
 
   public boolean isRuleQuery(String query) {
-    return query.contains(this.shibboleth);
+    return query != null && query.contains(this.shibboleth);
   }
 
   String addressesToQuery(Iterable<String> emails) {
