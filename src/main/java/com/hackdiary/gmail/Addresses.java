@@ -51,7 +51,13 @@ public class Addresses {
     return "from:{" + joinedEmails + " " + this.shibboleth + "} OR to:{" + joinedEmails + "}";
   }
 
-  Filter makeFilter(String labelId, boolean skipInbox, Iterable<String> emails) {
+  Filter makeFilter(String labelId, boolean skipInbox, boolean important, Iterable<String> emails) {
+    var addLabels = new LinkedList<String>();
+    addLabels.add(labelId);
+    if (important) {
+      addLabels.add("IMPORTANT");
+    }
+
     var f = new Filter();
 
     var c = new FilterCriteria();
@@ -59,7 +65,7 @@ public class Addresses {
     f.setCriteria(c);
 
     var a = new FilterAction();
-    a.setAddLabelIds(List.of(labelId));
+    a.setAddLabelIds(addLabels);
     if (skipInbox) {
       a.setRemoveLabelIds(List.of("INBOX"));
     }
@@ -70,8 +76,12 @@ public class Addresses {
 
   List<Filter> buildFilter(String labelId, List<Address> addresses) {
     boolean skipInbox = false;
+    boolean important = false;
     if (addresses.get(0).skipInbox) {
       skipInbox = true;
+    }
+    if (addresses.get(0).important) {
+      important = true;
     }
     List<Filter> filters = new LinkedList<Filter>();
     List<String> emails = addresses.stream().map(a -> a.email).collect(Collectors.toList());
@@ -90,7 +100,7 @@ public class Addresses {
       }
     }
     for (var k : partitions.keySet()) {
-      filters.add(this.makeFilter(labelId, skipInbox, partitions.get(k)));
+      filters.add(this.makeFilter(labelId, skipInbox, important, partitions.get(k)));
     }
     return filters;
   }

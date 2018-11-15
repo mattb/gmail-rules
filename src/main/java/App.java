@@ -38,11 +38,14 @@ public class App {
                 if (labelName.startsWith("Lists")) {
                   a.skipInbox = true;
                 }
+                if (labelName.equals("people")) {
+                  a.important = true;
+                }
                 return a;
               })
           .forEach(addresses::add);
     }
 
-    sync.ensureFilters(addresses.buildFilters(), addresses::isRuleQuery);
+    sync.ensureFilters(addresses.buildFilters(), addresses::isRuleQuery, false);
   }
 }

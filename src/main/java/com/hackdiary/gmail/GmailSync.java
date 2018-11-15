@@ -6,6 +6,7 @@ import com.google.api.services.gmail.model.Filter;
 import com.google.api.services.gmail.model.Label;
 import com.google.api.services.gmail.model.LabelColor;
 import com.google.api.services.gmail.model.ListLabelsResponse;
+import com.google.common.collect.Ordering;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -91,7 +92,8 @@ public class GmailSync {
     return labelToId;
   }
 
-  public void ensureFilters(List<Filter> filters, Predicate<String> shouldProcessQuery)
+  public void ensureFilters(
+      List<Filter> filters, Predicate<String> shouldProcessQuery, boolean rebuildAll)
       throws IOException {
     List<Filter> toDelete = new LinkedList<Filter>();
     Set<Filter> toAdd = new HashSet<Filter>(filters);
@@ -101,20 +103,25 @@ public class GmailSync {
     }
     for (var existingFilter : filterResult) {
       if (shouldProcessQuery.test(existingFilter.getCriteria().getQuery())) {
-        var found = false;
-        for (var filter : filters) {
-          if (filter.getCriteria().getQuery().equals(existingFilter.getCriteria().getQuery())
-              && existingFilter.getAction() != null
-              && filter
-                  .getAction()
-                  .getAddLabelIds()
-                  .equals(existingFilter.getAction().getAddLabelIds())) {
-            found = true;
-            toAdd.remove(filter);
-          }
-        }
-        if (!found) {
+        if (rebuildAll) {
           toDelete.add(existingFilter);
+        } else {
+          var found = false;
+          for (var filter : filters) {
+            if (filter.getCriteria().getQuery().equals(existingFilter.getCriteria().getQuery())
+                && existingFilter.getAction() != null
+                && Ordering.natural()
+                    .sortedCopy(filter.getAction().getAddLabelIds())
+                    .equals(
+                        Ordering.natural()
+                            .sortedCopy(existingFilter.getAction().getAddLabelIds()))) {
+              found = true;
+              toAdd.remove(filter);
+            }
+          }
+          if (!found) {
+            toDelete.add(existingFilter);
+          }
         }
       }
     }

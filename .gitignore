@@ -39,3 +39,4 @@ gradle-app.setting
 credentials.json
 tokens/
 .*.sw*
+tags
