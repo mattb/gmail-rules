@@ -1,53 +1,20 @@
-import com.google.common.io.Files;
 import com.hackdiary.gmail.*;
-import java.io.File;
-import java.io.FilenameFilter;
-import java.nio.charset.Charset;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.filefilter.*;
+import java.util.Set;
 
 public class App {
-  static List<String> IMPORTANT_LABELS = List.of("people", "work");
+  static Set<String> IMPORTANT_LABELS = Set.of("people", "work");
   static boolean REBUILD_ALL = false;
 
   public static void main(String[] args) throws Exception {
     var gm = GmailClient.getGmail();
     var sync = new GmailSync(gm);
 
-    var dir = new File("/Users/mattb/Setup/sieve");
-    FilenameFilter fileFilter = new WildcardFileFilter("*.txt");
-    var filenames = dir.listFiles(fileFilter);
-
-    var labelNames =
-        Stream.of(filenames)
-            .map(File::getName)
-            .map(FilenameUtils::getBaseName)
-            .collect(Collectors.toList());
-
-    var labels = sync.ensureLabels(labelNames);
+    var sources = new FileSources("/Users/mattb/Setup/sieve", IMPORTANT_LABELS);
+    var labelIds = sync.ensureLabels(sources.getLabelnames());
 
     var addresses = new Addresses("x@y.z");
-    for (var f : filenames) {
-      var labelName = FilenameUtils.getBaseName(f.getName());
-      Files.readLines(f, Charset.forName("UTF-8"))
-          .stream()
-          .map(
-              line -> {
-                var a = new Address();
-                a.labelId = labels.get(labelName);
-                a.email = line;
-                if (labelName.startsWith("Lists")) {
-                  a.skipInbox = true;
-                }
-                if (IMPORTANT_LABELS.contains(labelName)) {
-                  a.important = true;
-                }
-                return a;
-              })
-          .forEach(addresses::add);
+    for (Address a : sources.getAddresses(labelIds)) {
+      addresses.add(a);
     }
 
     sync.ensureFilters(addresses.buildFilters(), addresses::isRuleQuery, REBUILD_ALL);
