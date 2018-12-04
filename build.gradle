@@ -25,6 +25,8 @@ plugins {
   id 'com.google.cloud.tools.jib' version '0.9.11'
 
   id "net.java.openjdk.shinyafox.jshell.gradle.plugin" version "1.0.4"
+
+  id 'com.github.johnrengelman.shadow' version '4.0.3'
 }
 
 apply plugin: "io.spring.dependency-management"
