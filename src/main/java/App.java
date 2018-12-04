@@ -2,7 +2,7 @@ import com.hackdiary.gmail.*;
 import java.util.Set;
 
 class Config {
-  static String mode = "s3"; // or "dir"
+  static String mode = "dir"; // or "dir"
   static Set<String> IMPORTANT_LABELS = Set.of("people", "work");
   static boolean REBUILD_ALL = false;
   static String S3_BUCKET_NAME = "mattb-mail-filters";
