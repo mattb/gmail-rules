@@ -40,3 +40,8 @@ credentials.json
 tokens/
 .*.sw*
 tags
+
+.classpath
+.project
+.settings
+.vscode
