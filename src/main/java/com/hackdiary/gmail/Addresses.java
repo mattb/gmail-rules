@@ -58,6 +58,15 @@ public class Addresses {
       addLabels.add("IMPORTANT");
     }
 
+    var skipSpam = true;
+    var removeLabels = new LinkedList<String>();
+    if (skipInbox) {
+      removeLabels.add("INBOX"):
+    }
+    if (skipSpam) {
+      removeLabels.add("SPAM"):
+    }
+
     var f = new Filter();
 
     var c = new FilterCriteria();
@@ -66,9 +75,7 @@ public class Addresses {
 
     var a = new FilterAction();
     a.setAddLabelIds(addLabels);
-    if (skipInbox) {
-      a.setRemoveLabelIds(List.of("INBOX"));
-    }
+    a.setRemoveLabelIds(removeLabels);
     f.setAction(a);
 
     return f;
